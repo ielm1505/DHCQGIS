@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login</title>
+    <link rel="stylesheet" href="color.css">
+    <style>
+        /* Estilo general para el body */
+        body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: url('Imagen/Ptar_sur.jpg'); /* Imagen de fondo */
+    background-size: cover;
+    background-position: center;
+}
+
+/* Contenedor principal */
+.container {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Sección de login */
+.login-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Diseño del formulario */
+.login-form {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2em;
+    border-radius: 1em;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 350px;
+    text-align: center; /* Centra el contenido */
+}
+
+/* Estilo del logo */
+.login-logo {
+    display: block;
+    margin: 0 auto 1em auto; /* Centrado y espacio debajo */
+    width: 120px; /* Tamaño ajustable */
+    height: auto;
+}
+
+/* Ajuste de campos de entrada */
+input, select {
+    width: 100%;
+    padding: 0.5em;
+    font-size: 1em;
+    border-radius: 5px;
+    border: 1px solid black;
+    color: black;
+    text-align: left;
+}
+
+/* Botones */
+input[type=submit], input[type=reset] {
+    margin-top: 1.5em;
+    width: 48%;
+    text-align: center;
+    margin-right: 4%;
+}
+
+.formato1 {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #f0f0f0; /* Opcional: fondo */
+  text-align: center;
+  padding: 10px 0;
+  font-size: 14px;
+  color: #333;
+  z-index: 1000;
+}
+
+
+
+
+    </style>
+
+    <div class="formato1"><strong> AGUAKAN SA de CV® | Desarrollado por DHC TI</strong></div>
+
+</head>
+
+<body>
+    <div class="container">
+        <!-- Sección de Login -->
+        <div class="login-section">
+            <div class="login-form">
+                <form method="post" action="login.php" onsubmit="return validarFormulario()">
+                    
+                    <img src="Imagen/logo-aguakan.png" alt="Logo" class="login-logo">
+                    <div class="formato">Login</div>
+                    <div class="ub1">&#128273; Username</div>
+                    <input type="text" name="txtusuario" id="txtusuario" required>
+                    <div class="ub1">&#128274; password</div>
+                    <input type="password" name="txtpassword" id="txtpassword" required autocomplete="off">
+                    <div class="ub1">
+                        <input type="checkbox" id="show-password" onclick="verpassword()"> <label for="show-password">Mostrar contraseña</label>
+                    </div>
+                    <div id="error-message" style="color: red; display: none;">Usuario o contraseña incorrectos</div>
+                    <div align="center">
+                        <input type="submit" value="Login">
+                        
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+
+       
+    </div>
+
+    <script>
+        function verpassword() {
+            var tipo = document.getElementById("txtpassword");
+            if (tipo.type == "password") {
+                tipo.type = "text";
+            } else {
+                tipo.type = "password";
+            }
+        }
+/*valida la existencia del usurio en la base de datos de usuario y contraseña*/
+        function validarFormulario() {
+            var usuario = document.getElementById("txtusuario").value;
+            var password = document.getElementById("txtpassword").value;
+            if (usuario.trim() === "" || password.trim() === "") {
+                alert("Por favor complete todos los campos.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

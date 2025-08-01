@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta Espacial Tuberías</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.5.0/ol.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ol@7.5.0/dist/ol.js"></script>
+    <style>
+        #map {
+            width: 100%;
+            height: 600px;
+            margin-bottom: 10px;
+        }
+        .control-panel {
+            padding: 10px;
+            background: #f8f8f8;
+            border: 1px solid #ccc;
+        }
+    </style>
+    <script>
+        proj4.defs("EPSG:32616", "+proj=utm +zone=16 +datum=WGS84 +units=m +no_defs");
+        ol.proj.proj4.register(proj4);
+    </script>
+</head>
+<body>
+<h2>Consulta Espacial</h2>
+<div id="map"></div>
+<div class="control-panel">
+    <button onclick="activarConsultaEspacial()">Consulta Espacial</button>
+    
+</div>
+<div id="estadisticas" style="padding: 10px; background: #e8f5e9; border: 1px solid #ccc; margin-top: 10px;">
+    <h4>Estadísticas</h4>
+    <div id="contenido_estadisticas">No hay datos cargados todavía.</div>
+</div>
+
+<script>
+    const jsonSource = new ol.source.Vector();
+    const puntosSource = new ol.source.Vector();
+
+    const capaConduccion = new ol.layer.Vector({
+        source: jsonSource,
+        style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: 'blue', width: 2 }) })
+    });
+
+    const capaPuntos = new ol.layer.Vector({
+        source: puntosSource,
+        style: new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: 5,
+                fill: new ol.style.Fill({ color: 'red' }),
+                stroke: new ol.style.Stroke({ color: 'white', width: 1 })
+            })
+        })
+    });
+
+    const map = new ol.Map({
+        target: 'map',
+        layers: [
+            new ol.layer.Tile({ source: new ol.source.OSM() }),
+            capaConduccion,
+            capaPuntos
+        ],
+        view: new ol.View({
+            center: ol.proj.fromLonLat([-86.8475, 21.1619]),
+            zoom: 10
+        })
+    });
+
+    
+
+    let drawInteraction = null;
+    const drawSource = new ol.source.Vector();
+    const drawLayer = new ol.layer.Vector({ source: drawSource });
+    map.addLayer(drawLayer);
+
+    function activarConsultaEspacial() {
+        if (drawInteraction) {
+            map.removeInteraction(drawInteraction);
+            drawInteraction = null;
+            alert("Modo dibujo desactivado.");
+            return;
+        }
+
+        drawInteraction = new ol.interaction.Draw({ source: drawSource, type: 'Polygon' });
+        map.addInteraction(drawInteraction);
+        alert("Dibuja un polígono. Haz clic derecho para cerrar y consultar.");
+
+        drawInteraction.on('drawstart', () => drawSource.clear());
+
+        drawInteraction.on('drawend', (event) => {
+            const geometry = event.feature.getGeometry().clone().transform('EPSG:3857', 'EPSG:32616');
+            consultarEspacial(geometry);
+        });
+
+        map.getViewport().addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (drawInteraction) drawInteraction.finishDrawing();
+        });
+    }
+
+   function consultarEspacial(geometry) {
+        const wkt = new ol.format.WKT().writeGeometry(geometry);
+        const cql = `INTERSECTS(geom, ${wkt})`;
+
+        const peticiones = [];
+
+        if (capaConduccion.getVisible()) {
+            const urlTuberias = "https://dhcqgis.aguakan.com/geoserver/wfs?" +
+                "service=WFS&version=1.0.0&request=GetFeature" +
+                "&typeName=DHC_AGUAKAN:AEP_CANA_AP" +
+                "&outputFormat=application/json" +
+                "&srsname=EPSG:32616" +
+                "&CQL_FILTER=" + encodeURIComponent(cql);
+            peticiones.push(fetch(urlTuberias).then(res => res.json()));
+        } else {
+            peticiones.push(Promise.resolve(null));
+        }
+
+        if (capaPuntos.getVisible()) {
+            const urlPuntos = "https://dhcqgis.aguakan.com/geoserver/wfs?" +
+                "service=WFS&version=1.0.0&request=GetFeature" +
+                "&typeName=DHC_AGUAKAN:Puntos_de_medicion" +
+                "&outputFormat=application/json" +
+                "&srsname=EPSG:3857" +
+                "&CQL_FILTER=" + encodeURIComponent(cql);
+            peticiones.push(fetch(urlPuntos).then(res => res.json()));
+        } else {
+            peticiones.push(Promise.resolve(null));
+        }
+
+        Promise.all(peticiones).then(([geojsonTuberias, geojsonPuntos]) => {
+            const format = new ol.format.GeoJSON();
+            if (geojsonPuntos) {
+                const puntoFeatures = format.readFeatures(geojsonPuntos, { featureProjection: 'EPSG:3857' });
+                puntosSource.clear();
+                puntosSource.addFeatures(puntoFeatures);
+            }
+            mostrarResultados(geojsonTuberias, geojsonPuntos ? geojsonPuntos.features.length : 0);
+        }).catch(err => {
+            console.error("Error en consulta espacial:", err);
+            alert("Error al consultar:\n" + err.message);
+        });
+    }
+
+    function mostrarResultados(geojson, totalPuntos) {
+        let html = '';
+
+        if (geojson && geojson.features.length > 0) {
+            const features = geojson.features;
+            let matriz = {}, diametrosSet = new Set(), materialesSet = new Set(), redTipos = {}, totalesPorDiametro = {};
+
+            features.forEach(f => {
+                let props = f.properties;
+                let d = String(props.DIAMETRE || 'Desconocido');
+                let m = String(props.MATERIAU || 'Desconocido');
+                let t = String(props.Tipo_de_Re || 'Desconocido');
+                let l = parseFloat(props.Longitud) || 0;
+
+                if (!matriz[m]) matriz[m] = {};
+                if (!matriz[m][d]) matriz[m][d] = 0;
+                matriz[m][d] += l;
+
+                if (!totalesPorDiametro[d]) totalesPorDiametro[d] = 0;
+                totalesPorDiametro[d] += l;
+
+                diametrosSet.add(d);
+                materialesSet.add(m);
+                if (!redTipos[t]) redTipos[t] = 0;
+                redTipos[t] += l;
+            });
+
+            const diametros = Array.from(diametrosSet).sort();
+            const materiales = Array.from(materialesSet).sort();
+
+            html += `<h4>Matriz de Longitud por Material y Diámetro</h4><table border="1"><tr><th>Material \\ Diámetro</th>${diametros.map(d => `<th>${d}</th>`).join('')}</tr>`;
+            materiales.forEach(m => {
+                html += `<tr><td>${m}</td>`;
+                diametros.forEach(d => {
+                    html += `<td>${(matriz[m][d] || 0).toFixed(2)}</td>`;
+                });
+                html += `</tr>`;
+            });
+            html += `<tr><td><strong>Total</strong></td>${diametros.map(d => `<td><strong>${(totalesPorDiametro[d] || 0).toFixed(2)}</strong></td>`).join('')}</tr></table>`;
+
+            html += `<h4>Longitud por Tipo de Red</h4><table border="1"><tr><th>Tipo</th><th>Longitud</th></tr>`;
+            for (let tipo in redTipos) {
+                html += `<tr><td>${tipo}</td><td>${redTipos[tipo].toFixed(2)}</td></tr>`;
+            }
+            html += `</table>`;
+        } else {
+            html += `<p>No se encontraron tuberías.</p>`;
+        }
+
+        if (totalPuntos > 0) {
+            html += `<h4>Total de puntos de medición encontrados: ${totalPuntos}</h4>`;
+        }
+
+        document.getElementById('contenido_estadisticas').innerHTML = html;
+    }
+</script>
+</body>
+</html>

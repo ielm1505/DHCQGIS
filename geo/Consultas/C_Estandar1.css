@@ -1,0 +1,83 @@
+
+
+
+.ventana-flotante {
+  position: fixed;
+  top: 100px;
+  left: 50px;
+  width: 350px;
+  height: auto;                /* Altura automática */
+  max-height: initial;         /* Eliminar restricciones verticales */
+  min-height: auto;
+  background: white;
+  border: 2px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  resize: horizontal;          /* 🟢 Solo permite redimensionar horizontalmente */
+  font-family: Arial, sans-serif;
+  cursor: default;
+  user-select: none;
+}
+
+
+
+.ventana-header {
+  background: #eee;
+  color: rgb(8, 8, 8);
+  padding: 10px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  cursor: move; /* Indica que se puede arrastrar */
+  user-select: none;
+}
+
+.ventana-header button {
+  background: transparent;
+  border: none;
+  color: rgb(12, 12, 12);
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.ventana-contenido {
+  padding: 15px;
+  font-size: 14px;
+  color: #333;
+  user-select: text;
+  overflow-y: auto;
+   max-height: calc(60vh - 50px);
+}
+
+
+
+.encabezado-ventana {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f1f1f1;
+  padding: 6px 10px;
+  font-weight: bold;
+  border-bottom: 1px solid #ccc;
+}
+
+.contenido-scroll {
+  overflow-y: auto;
+  max-height: 70vh;
+  padding: 10px;
+}
+
+.cerrar {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}

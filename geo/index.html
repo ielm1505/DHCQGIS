@@ -1,0 +1,508 @@
+
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="./Consultas/estilo.css">
+    <link rel="stylesheet" href="./Consultas/C_Estandar1.css">
+    <link rel="stylesheet" href="./Consultas/zoom.css">
+    <link rel="stylesheet" href="./resources/ol.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+    <link rel="stylesheet" href="resources/fontawesome-all.min.css">
+    <link rel="stylesheet" type="text/css" href="resources/horsey.min.css">
+    <link rel="stylesheet" type="text/css" href="resources/ol3-search-layer.min.css">
+    <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
+    <link rel="stylesheet" href="./resources/qgis2web.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/ol-layerswitcher@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+    
+
+
+    <title>DHC_AGUAKAN</title>
+   
+    <script>
+        // Verifica sesión activa
+        fetch('verificar_sesion.php')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.activo) {
+                    window.location.href = '/dashboard/index.html';
+                } else {
+                    let usuarioElem = document.getElementById('usuario');
+                    if (usuarioElem) usuarioElem.textContent = data.usuario;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+
+        function cerrarSesion() {
+            window.location.href = "/dashboard/logout.php";
+        }
+
+        function C_Tub() {
+            window.location.href = "./Consultas/C_Tub.html";
+        }
+ function Factibilidad() {
+    window.location.href = "./Consultas/editor_capas.php";
+}
+
+
+        function C_ESP_TUB() {
+            window.location.href = "./Consultas/C_ESP_TUB.html";
+        }
+
+       
+        function toggleDropdown(element) {
+            const dropdown = element.nextElementSibling;
+            const allDropdowns = document.querySelectorAll('.dropdown-content');
+            allDropdowns.forEach(menu => {
+                if (menu !== dropdown) menu.style.display = 'none';
+            });
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+      
+
+
+    
+    </script>
+ 
+<script>
+document.addEventListener("contextmenu", function (e) {
+  e.preventDefault();
+  const menu = document.getElementById("contextMenu");
+  menu.style.top = e.clientY + "px";
+  menu.style.left = e.clientX + "px";
+  menu.style.display = "block";
+});
+
+// Ocultar si se hace clic fuera
+document.addEventListener("click", function () {
+  document.getElementById("contextMenu").style.display = "none";
+});
+let capaActiva = null;
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetch('/dashboard/verificar_usuario.php')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.valido) {
+                // ocultar o eliminar el botón Factibilidad
+                const factibilidadBtn = document.querySelector("#btnFactibilidad");
+                if (factibilidadBtn) factibilidadBtn.remove();
+            }
+        })
+        .catch(err => console.error("Error validación GeoServer:", err));
+});
+
+
+</script>
+
+
+</head>
+
+<body>
+ <!-- Menú contextual -->
+<div id="contextMenu">
+    <ul>
+        <li id="searchById">Buscar por Cliente</li>
+        <li id="btnBuscarUbicacionSM">Buscar SM</li>
+        <li id="Infraestructura">Buscar Infraestructura</li> 
+</div>
+
+
+   <!-- Menú desplegable superior -->
+    <div class="navbar">
+          <div class="menu-item">
+            <a onclick="cerrarSesion()">Cerrar Sesion</a>
+          
+        </div>
+        <div class="menu-item">
+            <a onclick="toggleDropdown(this)">Archivo</a>
+            <div class="dropdown-content">
+                <a onclick="document.getElementById('fileInput').click()">Cargar KMZ Temp</a>
+               
+            </div>
+        </div>
+        <div class="menu-item">
+            <a onclick="toggleDropdown(this)">Dibujo</a>
+            <div class="dropdown-content">
+                <a onclick="activarDibujo('Point')">Punto</a>
+                <a onclick="activarDibujo('LineString')">Línea</a>
+                <a onclick="activarDibujo('Polygon')">Polígono</a>      
+                <a onclick="activarDibujo('Circle')">Circulo</a>  
+                <a onclick="zoom()">Zoom</a>
+                <a onclick="limpiarDibujo()">Limpíar pantalla</a>  
+
+            </div>
+        </div>
+        <div class="menu-item">
+            <a onclick="toggleDropdown(this)">Consultas</a>
+            <div class="dropdown-content">
+                <a onclick="C_Tub()">Atributos AP y DS</a>
+               <a onclick="abrirVentanaConsultas(generarMenuConsultas())">Consulta Estándar</a>
+                <a onclick="activarConsultaEspacial()">Consulta Espacial</a>
+                <a id="btnFactibilidad" onclick="Factibilidad()">Factibilidad</a>
+            </div>
+        </div>
+    </div>
+    <!-- Mapa -->
+    <div id="map">
+        <div id="popup" class="ol-popup">
+            <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+            <div id="popup-content"></div>
+        </div>
+    </div>
+
+
+   
+    <div class="selected-value" id="selectedValue"></div>
+
+
+<div id="zoom-menu" style="display: none;">
+    <div class="drag-header">
+    <span>🧭 Zoom</span>
+    <button id="cerrar-menu" title="Cerrar">✖</button>
+</div>
+  <div class="zoom-buttons">
+    <button id="zoom-prev" title="Zoom anterior">⬅️Z_Ant.</button>
+    <button id="zoom-box" title="Zoom por ventana">🔲Z_Vent.</button>
+    <button id="zoom-home" title="Zoom inicial">🏠Z_Inicial</button>
+    </div>
+</div>
+
+
+
+
+
+
+<!-- Ventana flotante de Infraestructura -->
+<div id="formulario-infraestructura" class="ventana" style="display: none; position: absolute; top: 100px; left: 100px; background: white; border: 1px solid #ccc; padding: 10px; z-index: 1000; box-shadow: 2px 2px 10px rgba(0,0,0,0.3);">
+  <div class="ventana-header" style="font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+    <span>Buscar Infraestructura</span>
+    <button onclick="cerrarVentanaInfra()" style="background: transparent; border: none; font-size: 16px; cursor: pointer;">✖</button>
+  </div>
+  <div class="ventana-cuerpo">
+    <label for="busqueda-nombre">Nombre:</label>
+    <input type="text" id="busqueda-nombre" list="sugerencias-nombre" placeholder="Escriba un nombre...">
+    <datalist id="sugerencias-nombre"></datalist>
+    <button onclick="consultarInfraestructura()">Buscar</button>
+   
+  </div>
+</div>
+
+
+
+<script>
+  const input = document.getElementById("busqueda-nombre");
+  const datalist = document.getElementById("sugerencias-nombre");
+
+  const nombres = ["Tanque Sur", "Tanque Norte", "Estación Central", "Bomba 3", "Pozo Principal"];
+
+  input.addEventListener("input", () => {
+    // Limpia las sugerencias anteriores
+    datalist.innerHTML = "";
+
+    const valor = input.value.trim();
+
+    if (valor.length > 0) {
+      const filtrados = nombres.filter(nombre =>
+        nombre.toLowerCase().includes(valor.toLowerCase())
+      );
+
+      filtrados.forEach(nombre => {
+        const option = document.createElement("option");
+        option.value = nombre;
+        datalist.appendChild(option);
+      });
+    }
+  });
+
+  document.getElementById("busqueda-nombre").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    e.preventDefault(); // Previene que se envíe un formulario si lo hubiera
+    consultarInfraestructura(); // Ejecuta la misma función que el botón
+  }
+});
+
+</script>
+
+  <!-- Cuadro flotante para mostrar el resultado -->
+    <div id="searchResult" style="display:none; position:absolute;  background:white; border:1px solid black; padding:10px; z-index:100;">
+        <div id="searchContent"></div>
+        <button onclick="closeFloatingBox()">Cerrar</button>
+    </div>
+    <!-- Cuadro flotante para mostrar el resultado Estadistica -->
+    <div id="estadisticas_popup" class="popup" style="display: none;">
+        <div id="popup_header" class="popup-header">
+            <h3>Estadísticas</h3>
+            <button id="btnMinimizarEstadisticas">_</button>
+            <button id="btnCerrarEstadisticas">X</button>
+        </div>
+        <div id="contenido_estadisticas" class="popup-content"></div>
+        <button id="btnDescargarPuntos">Descargar puntos GeoJSON</button>
+
+    </div>
+
+    <div id="infoDibujo" class="floating-box1" style="display:none;">
+        <button class="close-btn" onclick="document.getElementById('infoDibujo').style.display='none'">×</button>
+        <div id="infoContenido"></div>
+    </div>
+
+
+<!--Cargar un kmz-->
+
+<input type="checkbox" id="toggleKmlLayer" checked> Mostrar capa KML/KMZ
+
+<input type="file" id="fileInput" accept=".kml,.kmz" style="display:none;" />
+
+<div id="mouse-position" style="
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 4px 8px;
+    font-family: sans-serif;
+    font-size: 13px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    z-index: 999;
+"></div>
+
+
+
+
+
+<!-- Ventana flotante: Consultas -->
+<div id="ventana-consultas" class="ventana-flotante" style="display: none; position: absolute; top: 100px; left: 100px; border: 1px solid #ccc; background: white; width: 400px; box-shadow: 0 0 10px rgba(0,0,0,0.2);">
+  <div id="header-consultas" style="cursor: move; background: #aaa; color: white; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center;">
+    <span>Consultas</span>
+    <div>
+      <button id="minimizar-consultas" style="margin-right: 5px;">_</button>
+      <button id="cerrar-consultas">×</button>
+    </div>
+  </div>
+  <div id="contenido-consultas" style="padding: 10px;">
+ 
+
+
+  </div>
+</div>
+<!-- Ventana flotante: Consultas_estandar -->
+
+<div id="ventana-formulario" class="ventana-flotante" style="display: none; position: absolute; top: 100px; left: 100px; border: 1px solid #ccc; background: white; width: 400px; box-shadow: 0 0 10px rgba(0,0,0,0.2);">
+  <div id="ventana-formulario-header" class="ventana-header">
+    <span>Buscar en capa WFS</span>
+    <button onclick="cerrarFormulario()">X</button>
+  </div>
+  <form id="formulario-dinamico" class="ventana-contenido"></form>
+  <div style="padding: 10px;">
+    <button type="button" onclick="cerrarFormulario()">Cerrar</button>
+    <button type="button" onclick="consultarDatos()">Consultar</button>
+  </div>
+</div>
+
+
+<div id="ventana-resultados" class="ventana-flotante" style="display: none; position: absolute; top: 100px; left: 100px; border: 1px solid #ccc; background: white; width: 400px; box-shadow: 0 0 10px rgba(0,0,0,0.2);">
+  <div id="ventana-header" style="cursor: move; background: #aaa; color: white; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center;">
+    <span>📊 Resultados Estadísticos </span>
+    <div>
+    <button onclick="minimizarVentanaResultados() " style="margin-right: 5px;" >–</button>
+    <button onclick="cerrarVentanaResultados()">X</button>
+  </div>
+   
+  </div>
+  <button onclick="descargarXLS()">📥 Descargar XLS</button>
+  <div id="contenido-resultados" class="ventana-contenido">
+   
+
+    <!-- Aquí se inyectan los resultados -->
+  </div>
+</div>
+
+
+
+
+
+
+
+
+<div id="resultados-estadisticas"></div>
+
+
+<!--<div id="resultadoPuntos" style="padding: 10px; background: #f0f0f0; border: 1px solid #ccc; margin-top: 10px;">
+
+</div>-->
+
+
+
+        <script src="resources/qgis2web_expressions.js"></script>
+        <script src="resources/proj4.js"></script>
+        <script>proj4.defs('EPSG:32616','+proj=utm +zone=16 +datum=WGS84 +units=m +no_defs');</script>
+		<script src="resources/polyfills.js"></script>
+        <script src="./resources/functions.js"></script>
+        <script src="./resources/ol.js"></script>
+        
+        
+        <script src="./resources/ol-layerswitcher.js"></script>
+        
+        <!-- Capas SOL -->
+
+        <script src="layers/SM_SOL_1.js"></script>
+		<script src="layers/Mza_sol_2.js"></script>
+       
+        <!-- Capas PM -->
+          
+        <script src="layers/Poligono_Actuacion_12.js"></script>
+        <script src="layers/Sectores_PM_13.js"></script>
+        <script src="layers/SM_Puerto_Morelos_14.js"></script>
+        <script src="layers/Manzanas_PuertoMorelos_15.js"></script>
+
+        
+        <script src="layers/zones_22.js"></script>
+        
+	   
+        <!-- Capas IM -->
+       
+        <!-- Capas BJ -->
+    
+
+        <!-- Capas Complementos -->
+    
+	    <script src="layers/Agua_Superficial_2012_2013_1.js"></script>
+        <script src="layers/Calidad_delagua_Subterranea_122023_2.js"></script>
+
+        <!-- Capas Division Politica -->    
+
+        <script src="layers/Quintana_Roo_1.js"></script>
+
+
+        <!-- BJ -->
+            <script src="styles/Lotes_BJ_style.js"></script>     
+        <script src="styles/Zonas_captacion_29_style.js"></script>
+        <script src="styles/Cobertura_Tanques_31_style.js"></script>
+        <script src="styles/Coberturas_Lineas_30_style.js"></script>
+        <script src="styles/Horario_Servicio_BJ_32_style.js"></script>
+        <script src="styles/Conduccion_BJ_copy_1_style.js"></script>
+        <script src="styles/Distribucion_BJ_copy_1_style.js"></script>
+        <script src="styles/AEP_VANN_VALVULAS_5_style.js"></script>   
+        <script src="styles/Tanques_34_style.js"></script>
+        <script src="styles/pozos_captacion_35_style.js"></script>
+        <script src="styles/P_Cloro_style.js"></script>
+
+        <script src="styles/Tuberia_ASS_0_style.js"></script>
+        <script src="styles/Carcamos_25_style.js"></script>
+        <script src="styles/Emisores_26_style.js"></script>
+        <script src="styles/colectores_26_style.js"></script>
+        <script src="styles/pozos_colectores_27_style.js"></script>
+        <script src="styles/Ptar_28_style.js"></script>
+        <script src="styles/Cobertura_PTAR_BJ_0_style.js"></script>
+ 
+         <!-- IM -->
+
+        <script src="styles/Emisor_colector_37_style.js"></script>
+        <script src="styles/Carcamos_38_style.js"></script>
+        <script src="styles/Ptar_39_style.js"></script>
+        <script src="styles/Pol_Carcamo_1_style.js"></script>
+                
+        <script src="styles/Conduccion_40_style.js"></script>
+        <script src="styles/Tanques_41_style.js"></script>
+        <script src="styles/Pol_Tanques_2_style.js"></script>
+        <script src="styles/Carcamos_Proy_style.js"></script>
+
+        <!-- PM -->
+
+        <script src="styles/Emisor_Colector_16_style.js"></script>
+        <script src="styles/Carcamo_17_style.js"></script>
+        <script src="styles/Ptar_18_style.js"></script>
+
+        <script src="styles/Conduccion_Distribucion_19_style.js"></script>
+        <script src="styles/Tanques_20_style.js"></script>
+        <script src="styles/VALVULAS_21_style.js"></script>
+        
+
+        <!-- SOL -->
+
+        <script src="styles/Carcamos_3_style.js"></script>
+        <script src="styles/Emisor_4_style.js"></script>
+        <script src="styles/Colector_4_style.js"></script>
+        <script src="styles/posos_colector_5_style.js"></script>
+        <script src="styles/Ptar_6_style.js"></script>
+        
+        <script src="styles/SM_SOL_1_style.js"></script>
+		
+		<script src="styles/linea_Chemuyil_7_style.js"></script>
+        <script src="styles/Conduccion_8_style.js"></script>
+        <script src="styles/Tanques_9_style.js"></script>
+        <script src="styles/Pozos_captacion_10_style.js"></script>
+        <script src="styles/P_Osmosis_11_style.js"></script>
+        <script src="styles/C_PTAR_2025_5_SOL_1_style.js"></script>
+		
+        <!-- Complementos -->
+
+        <script src="styles/BN_1_style.js"></script>
+        <script src="styles/Agua_Superficial_2012_2013_1_style.js"></script>
+        <script src="styles/Calidad_delagua_Subterranea_122023_2_style.js"></script>
+
+        <!-- Division Politica -->    
+
+        <script src="layers/Quintana_Roo_1.js"></script>
+        <script src="styles/Quintana_Roo_1_style.js"></script>
+        
+        <script src="styles/Mza_sol_2_style.js"></script>
+	    <script src="styles/Poligono_Actuacion_12_style.js"></script>
+        <script src="styles/Sectores_PM_13_style.js"></script>
+        <script src="styles/SM_Puerto_Morelos_14_style.js"></script>
+        <script src="styles/Manzanas_PuertoMorelos_15_style.js"></script>
+        <script src="styles/zones_22_style.js"></script>
+        <script src="styles/SM_23_style.js"></script>
+        <script src="styles/Manzanas_BJ_24_style.js"></script>
+         
+
+        <script src="./layers/layers.js" type="text/javascript"></script> 
+        <script src="./resources/Autolinker.min.js"></script>
+        <script src="./resources/qgis2web.js"></script>
+        <script src="./Consultas/b_Contrato.JS"></script>
+        <script src="./Consultas/b_SM.JS"></script>
+        <script src="./Consultas/Dibujo.js"></script>
+        <script src="./Consultas/C_E.js"></script>
+        <script src="./Consultas/cargar_kmz.js"></script>
+        <script src="./Consultas/ventana_C.js"></script>
+        <script src="./Consultas/C_Estandar1.js"></script>
+        <script src="./Consultas/C_Estandar2.js"></script>
+        <script src="./Consultas/C_Estandar3.js"></script>
+        <script src="./Consultas/Despliegue.js"></script>
+        <script src="./Consultas/Infraestructura.js"></script>
+        <script src="./Consultas/C_Linea.js"></script>
+        <script src="./Consultas/zoom1.js"></script>
+        
+
+        <script>
+        //    window.addEventListener('beforeunload', function () {
+          //      navigator.sendBeacon('/Login/logout.php');
+           // });
+
+
+
+
+            
+        </script>
+
+
+
+
+        
+<script>
+
+</script>
+
+    </body>
+</html>
+
+
