@@ -1,0 +1,70 @@
+<?php
+session_start();
+
+$allowedRoles = ['Admin', 'Editor', 'Usuario']; // roles permitidos
+
+if (!in_array($_SESSION['rol'] ?? '', $allowedRoles)) {
+    // Mostrar página HTML en lugar de texto plano
+    ?>
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Acceso Denegado</title>
+        <style>
+            body {
+                background: linear-gradient(135deg, #1e3c72, #2a5298);
+                color: #fff;
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+            }
+            .container {
+                text-align: center;
+                background: rgba(0,0,0,0.4);
+                padding: 40px 60px;
+                border-radius: 15px;
+                box-shadow: 0 0 20px rgba(0,0,0,0.3);
+                animation: fadeIn 0.8s ease;
+            }
+            h1 {
+                font-size: 2.5em;
+                margin-bottom: 10px;
+            }
+            p {
+                font-size: 1.2em;
+                margin-bottom: 20px;
+            }
+            a {
+                background-color: #ff4b5c;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: bold;
+                transition: background-color 0.3s ease;
+            }
+            a:hover {
+                background-color: #e43f51;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: scale(0.9); }
+                to { opacity: 1; transform: scale(1); }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚫 Acceso Denegado</h1>
+            <p>No tienes permiso para acceder a esta página.</p>
+            <a href="../../index.php">Volver al inicio</a>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+?>

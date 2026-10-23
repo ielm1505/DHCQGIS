@@ -1,41 +1,27 @@
 <?php
-date_default_timezone_set('America/Cancun'); 
-
-include('conexion.php');
 session_start();
+include('conexion.php');
 
-if (isset($_SESSION["usuario"])) {
-    $usuario = $_SESSION["usuario"];
-    $fecha_salida = date("Y-m-d H:i:s");
-
-    try {
-        $query = '
-            WITH ultimo_log AS (
-                SELECT id
-                FROM "Usuario"."Logs"
-                WHERE usuario = :usuario AND estado = :activo
-                ORDER BY fecha_ingreso DESC
-                LIMIT 1
-            )
-            UPDATE "Usuario"."Logs"
-            SET fecha_salida = :fecha_salida,
-                estado = :estado
-            WHERE id IN (SELECT id FROM ultimo_log)
-        ';
-        $stmt = $pdo->prepare($query);
-        $stmt->execute([
-            'fecha_salida' => $fecha_salida,
-            'estado'       => 'inactivo',
-            'usuario'      => $usuario,
-            'activo'       => 'activo'
-        ]);
-    } catch (PDOException $e) {
-        error_log("Error al registrar fin de sesión: " . $e->getMessage());
-    }
+if (isset($_SESSION['session_id'])) {
+    $ahora = date('Y-m-d H:i:s');
+    $stmt = $pdo->prepare('UPDATE "Usuario"."ldap_sesion" 
+        SET estado = :estado, fecha_salida = :salida 
+        WHERE id = :id');
+    $stmt->execute([
+        'estado' => 'cerrado',
+        'salida' => $ahora,
+        'id' => $_SESSION['session_id']
+    ]);
 }
 
 session_unset();
 session_destroy();
-header("Location: /dashboard/index.html");
+
+// Evitar caché
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
+header('Location: index.html');
 exit;
 ?>

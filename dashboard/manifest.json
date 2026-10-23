@@ -1,0 +1,16 @@
+{
+  "name":"GIS Navegacion",
+  "short_name":"GIS",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#ffffff",
+  "theme_color":"#0066ff",
+  "orientation":"portrait",
+  "icons":[
+    {
+      "src":"icon.png",
+      "sizes":"192x192",
+      "type":"image/png"
+    }
+  ]
+}
