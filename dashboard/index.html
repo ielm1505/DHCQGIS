@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<link rel="manifest" href="./manifest.json">
+
+<meta name="theme-color" content="#0066ff">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login DHC-AGUAKAN</title>
+    <style>
+        /* Estilo general para el body */
+        body {margin: 0; padding: 0; font-family: Arial, sans-serif; height: 100vh; overflow: hidden; position: relative; }
+
+        /* Fondo único para toda la pantalla */
+     body { margin: 0; padding: 0; font-family: Arial, sans-serif; height: 100vh;    overflow: hidden;    background-image: url("Imagen/Ptar_sur.jpg"); background-size: cover;  background-position: center; background-attachment: fixed;}
+        .split-container { display: flex; width: 100%; height: 100vh; }
+        .left-section { width: 50%; min-width: 400px; display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; background: transparent; }
+        .right-section { width: 60%; flex: 1; position: relative; background: transparent; }
+        /* Diseño del formulario de login */
+        .login-form {   background: rgba(255, 255, 255, 0.05);padding: 2.5em;   border-radius: 1em;  box-shadow: 0px 15px 40px rgba(0, 0, 0, 0.25);  width: 90%;  max-width: 400px;  text-align: center; border: 1px solid rgba(255, 255, 255, 0.95); }
+        /* Estilo del logo */
+        .login-logo { display: block; margin: 0 auto 1.5em auto;width: 180px;height: auto;filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        /* Campos de entrada */
+        input[type="text"],
+        input[type="password"] { width: 100%; padding: 12px; margin: 10px 0;   font-size: 16px;  border-radius: 8px; border: 2px solid #ddd; box-sizing: border-box; transition: all 0.3s;  background: rgba(255, 255, 255, 0.6); }
+        input[type="text"]:focus,
+        input[type="password"]:focus {  border-color: #4a90e2; outline: none;  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); background: white; }
+        /* Etiquetas */
+        .ub1 { text-align: left; font-weight: bold;  margin-top: 15px; color: #000000; font-size: 16px; }
+        /* Checkbox mostrar contraseña */
+        #show-password { width: auto; margin-right: 8px; }
+        /* Botones */
+        input[type="submit"] { background: linear-gradient(135deg, #175e74 0%, #66C5E3 50%,  #00A9E0 75%, #002D62 100%); color: white; border: none; padding: 14px; font-size: 16px; border-radius: 8px;cursor: pointer;  width: 50%; margin-top: 20px;transition: all 0.3s; font-weight: bold;letter-spacing: 0.5px;border: 1px solid rgba(255, 255, 255, 0.95);}
+        input[type="submit"]:hover {transform: translateY(-2px);box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4); }
+        /* Mensaje de error */
+        #error-message { color: #e74c3c; margin: 10px 0; font-size: 14px; min-height: 20px;   background: rgba(231, 76, 60, 0.1);  padding: 8px; border-radius: 4px;  border-left: 3px solid #e74c3c; }
+        .formato1 { position: fixed; bottom: 0; width: 100%; background-color: rgba(44, 62, 80, 0.9); color: white; text-align: center; padding: 12px 0; font-size: 14px; z-index: 1000; backdrop-filter: blur(5px); }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .split-container {
+                flex-direction: column;
+            }
+            
+            .left-section, .right-section {
+                width: 100%;
+                height: 50%;
+                min-width: unset;
+            }
+            
+            .left-section {
+                background: transparent;
+            }
+            
+            .right-section {
+                background: transparent;
+            }
+        }
+    </style>
+</head>
+<body>
+  <!-- Contenedor dividido -->
+    <div class="split-container">
+       
+        <div class="left-section">
+            <div class="login-form">
+                <form method="post" action="ldap_login.php" onsubmit="return validarFormulario()">
+                    <img src="Imagen/logo-aguakan.png" alt="Logo" class="login-logo">
+                    <div class="ub1">&#128273; Username</div>
+                    <input type="text" name="username" id="username" required placeholder="username">
+                    <div class="ub1">&#128274; Password</div>
+                    <input type="password" name="password" id="password" required autocomplete="off" placeholder="password">
+                    <div class="ub1" style="margin-top: 10px;">
+                    <input type="checkbox" id="show-password" onclick="verpassword()">
+                    <label for="show-password" style="font-weight: normal;">Mostrar contraseña</label>
+                    </div>
+                    <div align="center">
+                        <input type="submit" value="Login">
+                    </div>
+                </form>
+            </div>
+        </div>
+       
+        <div class="right-section" id="sphere-container">
+                    
+        </div>
+
+        <div class="formato1"><strong>AGUAKAN SA de CV® | Desarrollo Integral DHC TI v2.1.0</strong></div>
+    </div>
+  
+    <script>
+      
+        let currentBackground = null;
+   
+const BACKGROUND_IMAGES = [
+    "Imagen/Ptar_sur.jpg",
+    "Imagen/PlantaNorte.jpg",
+    "Imagen/Recorrido.jpg",
+    "Imagen/imagen1.jpg",
+    "Imagen/imagen2.jpg",
+    "Imagen/imagen3.jpg",
+    "Imagen/imagen4.jpg",
+    "Imagen/imagen5.jpg",
+    "Imagen/imagen6.jpg"
+];
+
+
+function getRandomBackground() {
+    return BACKGROUND_IMAGES[
+        Math.floor(Math.random() * BACKGROUND_IMAGES.length)
+    ];
+}
+
+        
+        // Función para cambiar el fondo de toda la pantalla
+        function changeBackground(imageUrl) {
+            // Crear elemento para precargar
+            const img = new Image();
+            img.onload = function() {
+                // Aplicar transición suave
+                document.body.style.transition = 'background-image 0.8s ease-in-out';
+                
+                // Cambiar el fondo
+                document.body.style.backgroundImage = `url('${imageUrl}')`;
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundPosition = 'center';
+                document.body.style.backgroundAttachment = 'fixed';
+                
+                currentBackground = imageUrl;
+                
+              //  console.log('Fondo cambiado a:', imageUrl);
+            };
+            img.src = imageUrl;
+        }
+        
+      
+      window.addEventListener('DOMContentLoaded', function() {
+    const randomBg = getRandomBackground();
+    changeBackground(randomBg);
+});
+
+    </script>
+
+    <!-- Scripts para la esfera 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    
+    <script>
+        // ========== FUNCIONES DEL LOGIN ==========
+        function verpassword() {
+            var tipo = document.getElementById("password");
+            if (tipo.type == "password") {
+                tipo.type = "text";
+            } else {
+                tipo.type = "password";
+            }
+        }
+
+        function validarFormulario() {
+            var usuario = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+            if (usuario.trim() === "" || password.trim() === "") {
+                document.getElementById("error-message").textContent = "Por favor complete todos los campos.";
+                document.getElementById("error-message").style.display = "block";
+                return false;
+            }
+            return true;
+        }
+
+        // ========== FUNCIONES DE LA ESFERA 3D ==========
+       
+        const IMAGES_FOLDER = 'Imagen/';
+        
+        // Lista de nombres de archivos de imagen
+        const IMAGE_FILES = [
+           "Ptar_sur.jpg",
+        "PlantaNorte.jpg",
+        "Recorrido.jpg",
+        "imagen1.jpg",
+        "imagen2.jpg",
+        "imagen3.jpg",
+        "imagen4.jpg",
+        "imagen5.jpg",
+        "imagen6.jpg",
+        "imagen7.jpg",
+        "imagen8.jpg",
+        "imagen9.jpg",
+        "imagen10.jpg",
+        "imagen11.jpg",
+        "imagen12.jpg",
+        "imagen13.jpg"
+       
+        ];
+
+        
+        let scene, camera, renderer, sphere, controls, raycaster, mouse;
+        let loadedImages = [];
+        let isRotating = true;
+        let rotationSpeed = 0.005;
+
+       
+        async function initSphere() {
+            // Mostrar loading
+            //document.getElementById('loading').style.display = 'block';
+            
+           
+            scene = new THREE.Scene();
+            scene.background = null; 
+            
+            
+            camera = new THREE.PerspectiveCamera(75, 
+                document.querySelector('.right-section').offsetWidth / 
+                document.querySelector('.right-section').offsetHeight, 
+                0.1, 1000);
+            camera.position.z = 5;
+            
+            
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                alpha: true, 
+                outputEncoding: THREE.sRGBEncoding
+            });
+            
+            const container = document.querySelector('.right-section');
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            renderer.setClearColor(0x000000, 0); // Fondo transparente
+            container.appendChild(renderer.domElement);
+            
+            // Controles de órbita
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 2;
+            controls.maxDistance = 15;
+            
+            // Raycaster para detectar clicks
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            
+            
+            createSphere();
+            
+            // Iluminación
+            setupLights();
+            
+            // Cargar imágenes y crear textura
+            await loadAndCreateGridTexture();
+           
+            // Configurar eventos
+            setupSphereEventListeners();
+            
+            // Iniciar animación
+            animate();
+        }
+
+        function createSphere() {
+            const geometry = new THREE.SphereGeometry(2, 128, 128);
+            
+            
+            const material = new THREE.MeshPhongMaterial({
+                color: 0xffffff,
+                shininess: 20,
+                specular: 0x222222,
+                reflectivity: 0.1,
+                transparent: false,
+                opacity: 1
+            });
+            
+            sphere = new THREE.Mesh(geometry, material);
+            scene.add(sphere);
+        }
+
+        function setupLights() {
+            // Luz ambiental
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+            scene.add(ambientLight);
+            
+            // Luz principal
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            mainLight.position.set(3, 4, 5);
+            scene.add(mainLight);
+            
+            // Luz de relleno
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            fillLight.position.set(-3, 2, -3);
+            scene.add(fillLight);
+        }
+
+        // Cargar imágenes
+        async function loadAndCreateGridTexture() {
+            for (let i = 0; i < IMAGE_FILES.length; i++) {
+                const filename = IMAGE_FILES[i];
+                const imagePath = IMAGES_FOLDER + filename;
+                
+                try {
+                    const img = await loadImage(imagePath);
+                    loadedImages.push({
+                        image: img,
+                        name: filename,
+                        path: imagePath,
+                        index: i
+                    });
+                } catch (error) {
+                    console.error(`Error cargando ${filename}:`, error);
+                    loadedImages.push({
+                        image: createPlaceholderImage(),
+                        name: filename + ' (no cargada)',
+                        path: imagePath,
+                        index: i
+                    });
+                }
+            }
+            
+            if (loadedImages.length > 0) {
+         
+                createGridTexture();
+            } else {
+               // document.getElementById('info').textContent = 
+                 //   'No se pudieron cargar imágenes';
+            }
+        }
+
+        function loadImage(path) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                
+                img.onload = () => {
+                    //console.log(`Imagen cargada: ${path} (${img.width}x${img.height})`);
+                    resolve(img);
+                };
+                img.onerror = () => reject(new Error(`Error cargando: ${path}`));
+                img.src = path + '?t=' + Date.now();
+            });
+        }
+
+        function createPlaceholderImage() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+            gradient.addColorStop(0, '#4361ee');
+            gradient.addColorStop(1, '#3a0ca3');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 512);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 40px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Imagen', 256, 220);
+            ctx.fillText('No', 256, 270);
+            ctx.fillText('Cargada', 256, 320);
+            
+            const img = new Image();
+            img.src = canvas.toDataURL();
+            return img;
+        }
+
+       
+        function createGridTexture() {
+            const canvas = document.createElement('canvas');
+            const size = 2048;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Fondo blanco
+            ctx.fillStyle = '#ffffff00';
+            ctx.fillRect(0, 0, size, size);
+            
+            const gridSize = Math.ceil(Math.sqrt(loadedImages.length));
+            const cellSize = size / gridSize;
+            const padding = cellSize * 0.03;
+            const innerSize = cellSize - (padding * 2);
+            
+            loadedImages.forEach((item, index) => {
+                const img = item.image;
+                const row = Math.floor(index / gridSize);
+                const col = index % gridSize;
+                const x = col * cellSize + padding;
+                const y = row * cellSize + padding;
+                
+                const ratio = Math.min(innerSize / img.width, innerSize / img.height);
+                const width = img.width * ratio;
+                const height = img.height * ratio;
+                const offsetX = (innerSize - width) / 2;
+                const offsetY = (innerSize - height) / 2;
+                
+                // Fondo para la celda
+                ctx.fillStyle = '#ffffff00'; //#ffffff00
+                ctx.fillRect(x - padding/2, y - padding/2, innerSize + padding, innerSize + padding);
+                
+                
+                const borderRadius = innerSize * 0.08;
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(x + borderRadius, y);
+                ctx.lineTo(x + innerSize - borderRadius, y);
+                ctx.quadraticCurveTo(x + innerSize, y, x + innerSize, y + borderRadius);
+                ctx.lineTo(x + innerSize, y + innerSize - borderRadius);
+                ctx.quadraticCurveTo(x + innerSize, y + innerSize, x + innerSize - borderRadius, y + innerSize);
+                ctx.lineTo(x + borderRadius, y + innerSize);
+                ctx.quadraticCurveTo(x, y + innerSize, x, y + innerSize - borderRadius);
+                ctx.lineTo(x, y + borderRadius);
+                ctx.quadraticCurveTo(x, y, x + borderRadius, y);
+                ctx.closePath();
+                ctx.clip();
+                
+                
+                ctx.drawImage(img, x + offsetX, y + offsetY, width, height);
+                ctx.restore();
+                
+                
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, innerSize, innerSize);
+            });
+            
+            applyTextureToSphere(canvas);
+        }
+
+        function applyTextureToSphere(canvas) {
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            texture.encoding = THREE.sRGBEncoding;
+            texture.minFilter = THREE.LinearMipMapLinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.needsUpdate = true;
+            
+            if (sphere.material.map) {
+                sphere.material.map.dispose();
+            }
+            
+            sphere.material.map = texture;
+            sphere.material.needsUpdate = true;
+        }
+
+        
+        function getClickedImageUV(event) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(sphere);
+            
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const uv = intersect.uv;
+                
+                const texX = uv.x;
+                const texY = 1 - uv.y;
+                
+                return findImageAtTextureCoordinates(texX, texY);
+            }
+            
+            return null;
+        }
+
+        function findImageAtTextureCoordinates(x, y) {
+            const gridSize = Math.ceil(Math.sqrt(loadedImages.length));
+            const cellX = Math.floor(x * gridSize);
+            const cellY = Math.floor(y * gridSize);
+            const cellIndex = cellY * gridSize + cellX;
+            
+            if (cellIndex >= 0 && cellIndex < loadedImages.length) {
+                return loadedImages[cellIndex];
+            }
+            
+            return null;
+        }
+
+        function setupSphereEventListeners() {
+           
+            renderer.domElement.addEventListener('click', (event) => {
+                const clickedImage = getClickedImageUV(event);
+                
+                if (clickedImage) {
+                    
+                    changeBackground(clickedImage.path);
+                    
+                    
+                    document.getElementById('info').style.background = 'rgba(0, 100, 0, 0.8)';
+                    
+                    
+                    isRotating = false;
+                    
+                    
+                    sphere.material.emissive = new THREE.Color(0x444444);
+                    sphere.material.emissiveIntensity = 0.3;
+                    
+                    setTimeout(() => {
+                        isRotating = true;
+                        sphere.material.emissive = new THREE.Color(0x000000);
+                        sphere.material.emissiveIntensity = 0;
+                        
+                        
+                        setTimeout(() => {
+                            if (loadedImages.length > 0) {
+                                document.getElementById('info').textContent = 
+                                    `${loadedImages.length} imágenes - Click en cualquier imagen`;
+                                //document.getElementById('info').style.background = 'rgba(0, 0, 0, 0.7)';
+                            }
+                        }, 3000);
+                    }, 1000);
+                }
+            });
+            
+            
+            renderer.domElement.addEventListener('dblclick', () => {
+                controls.reset();
+                camera.position.set(0, 0, 5);
+                sphere.rotation.set(0, 0, 0);
+                isRotating = true;
+                
+                document.getElementById('info').textContent = 
+                    `${loadedImages.length} imágenes - Click en cualquier imagen`;
+                //document.getElementById('info').style.background = 'rgba(0, 0, 0, 0.7)';
+            });
+            
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    isRotating = !isRotating;
+                 
+                    
+                    setTimeout(() => {
+                        document.getElementById('info').textContent = 
+                            `${loadedImages.length} imágenes`;
+                    }, 1500);
+                }
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (isRotating && sphere) {
+                sphere.rotation.y += rotationSpeed * 0.7;
+                sphere.rotation.x += rotationSpeed * 0.0;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Redimensionar cuando cambia el tamaño de la ventana
+        window.addEventListener('resize', () => {
+            const container = document.querySelector('.right-section');
+            if (camera && renderer) {
+                camera.aspect = container.offsetWidth / container.offsetHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initSphere();
+        });
+    </script>
+
+
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initSphere();
+        });
+    </script>
+
+<script>
+if('serviceWorker' in navigator){
+
+    navigator.serviceWorker.register(
+
+        '/service-worker.js'
+
+    )
+
+    .then(function(){
+
+        console.log(
+
+            'Service Worker OK'
+
+        );
+
+    });
+
+}
+
+</script>
+</body>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
